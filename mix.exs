@@ -1,8 +1,8 @@
-defmodule NervesSystemOsd32mp1Brick.MixProject do
+defmodule NervesSystemBrick.MixProject do
   use Mix.Project
 
-  @github_organization "tapickell"
-  @app :nerves_system_osd32mp1_brick
+  @github_organization "datum-systems"
+  @app :nerves_system_brick
   @version Path.join(__DIR__, "VERSION")
            |> File.read!()
            |> String.trim()
@@ -59,7 +59,7 @@ defmodule NervesSystemOsd32mp1Brick.MixProject do
 
   defp description do
     """
-    Nerves System - OSD32MP1
+    Nerves System - Brick
     """
   end
 
@@ -84,7 +84,10 @@ defmodule NervesSystemOsd32mp1Brick.MixProject do
       "LICENSE",
       "mix.exs",
       "nerves_defconfig",
-      "osd32mp1-brk.dts",
+      "brick-brk.dts",
+      "brick157-pinctrl.dtsi",
+      "brick-pinctrl.dtsi",
+      "brick-stm32mp157c.dtsi",
       "post-build.sh",
       "post-createfs.sh",
       "README.md",
@@ -109,7 +112,7 @@ defmodule NervesSystemOsd32mp1Brick.MixProject do
     if function_exported?(Mix, :target, 1) do
       apply(Mix, :target, [:target])
     else
-      System.put_env("MIX_TARGET", "osd32mp1")
+      System.put_env("MIX_TARGET", "brick")
     end
   end
 end

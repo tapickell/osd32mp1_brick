@@ -1,0 +1,61 @@
+From 5f943ed7fb77957cf8f53a14b97878a595ae6e22 Mon Sep 17 00:00:00 2001
+From: mcarlin <mcarlin@datumsystems.com>
+Date: Fri, 9 Oct 2020 14:43:13 -0700
+Subject: [PATCH 3/6] Use stm32 DAC2 unbuffered.
+
+---
+ drivers/iio/dac/stm32-dac-core.h | 12 ++++++++++--
+ drivers/iio/dac/stm32-dac.c      | 11 +++++++++++
+ 2 files changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/iio/dac/stm32-dac-core.h b/drivers/iio/dac/stm32-dac-core.h
+index d3b415fb9575..5e1603306703 100644
+--- a/drivers/iio/dac/stm32-dac-core.h
++++ b/drivers/iio/dac/stm32-dac-core.h
+@@ -17,11 +17,19 @@
+ #define STM32_DAC_DHR12R2	0x14
+ #define STM32_DAC_DOR1		0x2C
+ #define STM32_DAC_DOR2		0x30
++#define STM32_DAC_MCR		0x3C
+ 
+ /* STM32_DAC_CR bit fields */
+-#define STM32_DAC_CR_EN1		BIT(0)
++#define STM32_DAC_CR_EN1			BIT(0)
+ #define STM32H7_DAC_CR_HFSEL		BIT(15)
+-#define STM32_DAC_CR_EN2		BIT(16)
++#define STM32_DAC_CR_EN2			BIT(16)
++
++/* STM32_DAC_MCR bit fields */
++#define STM32_DAC_MCR_MODE2_MASK	GENMASK(18,16)
++#define STM32_DAC_MCR_MODE2(x)		(((x) & 0x7) << 16)
++#define STM32_DAC_MCR_MODE1_MASK	GENMASK(2,0)
++#define STM32_DAC_MCR_MODE1(x)		(((x) & 0x7) << 0)
++
+ 
+ /**
+  * struct stm32_dac_common - stm32 DAC driver common data (for all instances)
+diff --git a/drivers/iio/dac/stm32-dac.c b/drivers/iio/dac/stm32-dac.c
+index cce26a3a6627..5d1486561bb5 100644
+--- a/drivers/iio/dac/stm32-dac.c
++++ b/drivers/iio/dac/stm32-dac.c
+@@ -53,6 +53,17 @@ static int stm32_dac_set_enable_state(struct iio_dev *indio_dev, int ch,
+ 	u32 en = enable ? msk : 0;
+ 	int ret;
+ 
++	// Datum brick use CH2 in unbuffered mode
++	if(ch == 2)
++	{
++		ret = regmap_update_bits(dac->common->regmap, STM32_DAC_MCR, 
++			STM32_DAC_MCR_MODE2_MASK, STM32_DAC_MCR_MODE2(2));
++		if(ret < 0) 
++		{
++			dev_err(&indio_dev->dev, "Ch%d disable buffer failed\n", ch);
++			return ret;
++		}
++	}
+ 	ret = regmap_update_bits(dac->common->regmap, STM32_DAC_CR, msk, en);
+ 	if (ret < 0) {
+ 		dev_err(&indio_dev->dev, "%s failed\n", en ?
+-- 
+2.28.0
+

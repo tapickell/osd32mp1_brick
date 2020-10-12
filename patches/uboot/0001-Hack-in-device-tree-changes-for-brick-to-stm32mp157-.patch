@@ -1,0 +1,296 @@
+From a16bce8e59dd2baa3394a6512e473fe148babb72 Mon Sep 17 00:00:00 2001
+From: mcarlin <mcarlin@datumsystems.com>
+Date: Fri, 31 Jul 2020 09:30:25 -0700
+Subject: [PATCH 1/3] Hack in device tree changes for brick to stm32mp157
+ device trees in uboot.   This is not a great solution but the only one I
+ could get to work.
+
+---
+ arch/arm/dts/stm32mp157-pinctrl.dtsi |  14 ++
+ arch/arm/dts/stm32mp157a-dk1.dts     | 188 ++-------------------------
+ 2 files changed, 23 insertions(+), 179 deletions(-)
+
+diff --git a/arch/arm/dts/stm32mp157-pinctrl.dtsi b/arch/arm/dts/stm32mp157-pinctrl.dtsi
+index 422dad1ddd..456996d81e 100644
+--- a/arch/arm/dts/stm32mp157-pinctrl.dtsi
++++ b/arch/arm/dts/stm32mp157-pinctrl.dtsi
+@@ -1064,6 +1064,20 @@
+ 				};
+ 			};
+ 
++			
++			uart4_pins_c: uart4-2 {
++				pins1 {
++					pinmux = <STM32_PINMUX('A', 12, AF6)>; /* UART4_TX */
++					bias-disable;
++					drive-push-pull;
++					slew-rate = <0>;
++				};
++				pins2 {
++					pinmux = <STM32_PINMUX('A', 11, AF6)>; /* UART4_RX */
++					bias-disable;
++				};
++			};
++
+ 			uart7_pins_a: uart7-0 {
+ 				pins1 {
+ 					pinmux = <STM32_PINMUX('E', 8, AF7)>; /* UART4_TX */
+diff --git a/arch/arm/dts/stm32mp157a-dk1.dts b/arch/arm/dts/stm32mp157a-dk1.dts
+index 624bf6954b..e0d4284359 100644
+--- a/arch/arm/dts/stm32mp157a-dk1.dts
++++ b/arch/arm/dts/stm32mp157a-dk1.dts
+@@ -76,26 +76,6 @@
+ 		};
+ 	};
+ 
+-	led {
+-		compatible = "gpio-leds";
+-		blue {
+-			label = "heartbeat";
+-			gpios = <&gpiod 11 GPIO_ACTIVE_HIGH>;
+-			linux,default-trigger = "heartbeat";
+-			default-state = "off";
+-		};
+-	};
+-
+-	sound {
+-		compatible = "audio-graph-card";
+-		label = "STM32MP1-DK";
+-		routing =
+-			"Playback" , "MCLK",
+-			"Capture" , "MCLK",
+-			"MICL" , "Mic Bias";
+-		dais = <&sai2a_port &sai2b_port &i2s2_port>;
+-		status = "okay";
+-	};
+ };
+ 
+ &adc {
+@@ -125,13 +105,6 @@
+ 	};
+ };
+ 
+-&cec {
+-	pinctrl-names = "default", "sleep";
+-	pinctrl-0 = <&cec_pins_b>;
+-	pinctrl-1 = <&cec_pins_sleep_b>;
+-	status = "okay";
+-};
+-
+ &ethernet0 {
+ 	status = "okay";
+ 	pinctrl-0 = <&ethernet0_rgmii_pins_a>;
+@@ -156,80 +129,6 @@
+ 	status = "okay";
+ };
+ 
+-&i2c1 {
+-	pinctrl-names = "default", "sleep";
+-	pinctrl-0 = <&i2c1_pins_a>;
+-	pinctrl-1 = <&i2c1_pins_sleep_a>;
+-	i2c-scl-rising-time-ns = <100>;
+-	i2c-scl-falling-time-ns = <7>;
+-	status = "okay";
+-	/delete-property/dmas;
+-	/delete-property/dma-names;
+-
+-	hdmi-transmitter@39 {
+-		compatible = "sil,sii9022";
+-		reg = <0x39>;
+-		iovcc-supply = <&v3v3_hdmi>;
+-		cvcc12-supply = <&v1v2_hdmi>;
+-		reset-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>;
+-		interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+-		interrupt-parent = <&gpiog>;
+-		#sound-dai-cells = <0>;
+-		status = "okay";
+-
+-		ports {
+-			#address-cells = <1>;
+-			#size-cells = <0>;
+-
+-			port@0 {
+-				reg = <0>;
+-				sii9022_in: endpoint {
+-					remote-endpoint = <&ltdc_ep0_out>;
+-				};
+-			};
+-
+-			port@3 {
+-				reg = <3>;
+-				sii9022_tx_endpoint: endpoint {
+-					remote-endpoint = <&i2s2_endpoint>;
+-				};
+-			};
+-		};
+-	};
+-
+-	cs42l51: cs42l51@4a {
+-		compatible = "cirrus,cs42l51";
+-		reg = <0x4a>;
+-		#sound-dai-cells = <0>;
+-		VL-supply = <&v3v3>;
+-		VD-supply = <&v1v8_audio>;
+-		VA-supply = <&v1v8_audio>;
+-		VAHP-supply = <&v1v8_audio>;
+-		reset-gpios = <&gpiog 9 GPIO_ACTIVE_LOW>;
+-		clocks = <&sai2a>;
+-		clock-names = "MCLK";
+-		status = "okay";
+-
+-		cs42l51_port: port {
+-			#address-cells = <1>;
+-			#size-cells = <0>;
+-
+-			cs42l51_tx_endpoint: endpoint@0 {
+-				reg = <0>;
+-				remote-endpoint = <&sai2a_endpoint>;
+-				frame-master;
+-				bitclock-master;
+-			};
+-
+-			cs42l51_rx_endpoint: endpoint@1 {
+-				reg = <1>;
+-				remote-endpoint = <&sai2b_endpoint>;
+-				frame-master;
+-				bitclock-master;
+-			};
+-		};
+-	};
+-};
+ 
+ &i2c4 {
+ 	pinctrl-names = "default";
+@@ -381,7 +280,7 @@
+ 				regulator-active-discharge = <1>;
+ 			 };
+ 		};
+-
++#if 0
+ 		onkey {
+ 			compatible = "st,stpmic1-onkey";
+ 			interrupts = <IT_PONKEY_F 0>, <IT_PONKEY_R 0>;
+@@ -389,7 +288,7 @@
+ 			power-off-time-sec = <10>;
+ 			status = "okay";
+ 		};
+-
++#endif
+ 		watchdog {
+ 			compatible = "st,stpmic1-wdt";
+ 			status = "disabled";
+@@ -397,22 +296,6 @@
+ 	};
+ };
+ 
+-&i2s2 {
+-	clocks = <&rcc SPI2>, <&rcc SPI2_K>, <&rcc PLL3_Q>, <&rcc PLL3_R>;
+-	clock-names = "pclk", "i2sclk", "x8k", "x11k";
+-	pinctrl-names = "default", "sleep";
+-	pinctrl-0 = <&i2s2_pins_a>;
+-	pinctrl-1 = <&i2s2_pins_sleep_a>;
+-	status = "okay";
+-
+-	i2s2_port: port {
+-		i2s2_endpoint: endpoint {
+-			remote-endpoint = <&sii9022_tx_endpoint>;
+-			format = "i2s";
+-			mclk-fs = <256>;
+-		};
+-	};
+-};
+ 
+ &ipcc {
+ 	status = "okay";
+@@ -423,22 +306,6 @@
+ 	status = "okay";
+ };
+ 
+-&ltdc {
+-	pinctrl-names = "default", "sleep";
+-	pinctrl-0 = <&ltdc_pins_a>;
+-	pinctrl-1 = <&ltdc_pins_sleep_a>;
+-	status = "okay";
+-
+-	port {
+-		#address-cells = <1>;
+-		#size-cells = <0>;
+-
+-		ltdc_ep0_out: endpoint@0 {
+-			reg = <0>;
+-			remote-endpoint = <&sii9022_in>;
+-		};
+-	};
+-};
+ 
+ &m4_rproc {
+ 	memory-region = <&retram>, <&mcuram>, <&mcuram2>, <&vdev0vring0>,
+@@ -463,50 +330,6 @@
+ 	status = "okay";
+ };
+ 
+-&sai2 {
+-	clocks = <&rcc SAI2>, <&rcc PLL3_Q>, <&rcc PLL3_R>;
+-	clock-names = "pclk", "x8k", "x11k";
+-	pinctrl-names = "default", "sleep";
+-	pinctrl-0 = <&sai2a_pins_a>, <&sai2b_pins_b>;
+-	pinctrl-1 = <&sai2a_sleep_pins_a>, <&sai2b_sleep_pins_b>;
+-	status = "okay";
+-
+-	sai2a: audio-controller@4400b004 {
+-		#clock-cells = <0>;
+-		dma-names = "tx";
+-		clocks = <&rcc SAI2_K>;
+-		clock-names = "sai_ck";
+-		status = "okay";
+-
+-		sai2a_port: port {
+-			sai2a_endpoint: endpoint {
+-				remote-endpoint = <&cs42l51_tx_endpoint>;
+-				format = "i2s";
+-				mclk-fs = <256>;
+-				dai-tdm-slot-num = <2>;
+-				dai-tdm-slot-width = <32>;
+-			};
+-		};
+-	};
+-
+-	sai2b: audio-controller@4400b024 {
+-		dma-names = "rx";
+-		st,sync = <&sai2a 2>;
+-		clocks = <&rcc SAI2_K>, <&sai2a>;
+-		clock-names = "sai_ck", "MCLK";
+-		status = "okay";
+-
+-		sai2b_port: port {
+-			sai2b_endpoint: endpoint {
+-				remote-endpoint = <&cs42l51_rx_endpoint>;
+-				format = "i2s";
+-				mclk-fs = <256>;
+-				dai-tdm-slot-num = <2>;
+-				dai-tdm-slot-width = <32>;
+-			};
+-		};
+-	};
+-};
+ 
+ &sdmmc1 {
+ 	pinctrl-names = "default", "opendrain", "sleep";
+@@ -522,7 +345,14 @@
+ 
+ &uart4 {
+ 	pinctrl-names = "default";
++/* brick */	
++#if 0	
++	pinctrl-0 = <&uart4_pins_c>;
++#endif	
++/* osd32mp1-brk */
++#if 1	
+ 	pinctrl-0 = <&uart4_pins_a>;
++#endif	
+ 	status = "okay";
+ };
+ 
+-- 
+2.26.2
+

@@ -1,0 +1,49 @@
+From a6ee9eadfd7f83f6de176a3685a0a0aba19866a2 Mon Sep 17 00:00:00 2001
+From: mcarlin <mcarlin@datumsystems.com>
+Date: Tue, 4 Aug 2020 09:57:02 -0700
+Subject: [PATCH 2/3] Hack in GP3 pin high in device tree (this is done as LED
+ so is truly a hack).
+
+---
+ arch/arm/dts/stm32mp157a-dk1.dts | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/dts/stm32mp157a-dk1.dts b/arch/arm/dts/stm32mp157a-dk1.dts
+index e0d4284359..899c6551b2 100644
+--- a/arch/arm/dts/stm32mp157a-dk1.dts
++++ b/arch/arm/dts/stm32mp157a-dk1.dts
+@@ -76,6 +76,17 @@
+ 		};
+ 	};
+ 
++	leds {
++		compatible = "gpio-leds";
++		phy0 {
++			label = "p0:none:phy0";
++			gpios = <&gpiog 3 GPIO_ACTIVE_LOW>;
++			linux,default-trigger = "off";
++			default-state = "off";
++		};
++	};
++
++
+ };
+ 
+ &adc {
+@@ -346,11 +357,11 @@
+ &uart4 {
+ 	pinctrl-names = "default";
+ /* brick */	
+-#if 0	
++#if 1	
+ 	pinctrl-0 = <&uart4_pins_c>;
+ #endif	
+ /* osd32mp1-brk */
+-#if 1	
++#if 0	
+ 	pinctrl-0 = <&uart4_pins_a>;
+ #endif	
+ 	status = "okay";
+-- 
+2.26.2
+

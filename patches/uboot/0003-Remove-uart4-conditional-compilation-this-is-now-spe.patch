@@ -1,0 +1,32 @@
+From 6b20e3ab107381cdc14eec79826310e9367e5045 Mon Sep 17 00:00:00 2001
+From: mcarlin <mcarlin@datumsystems.com>
+Date: Tue, 4 Aug 2020 12:19:47 -0700
+Subject: [PATCH 3/3] Remove uart4 conditional compilation, this is now
+ specific to the brick
+
+---
+ arch/arm/dts/stm32mp157a-dk1.dts | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/arch/arm/dts/stm32mp157a-dk1.dts b/arch/arm/dts/stm32mp157a-dk1.dts
+index 899c6551b2..294ca02f0e 100644
+--- a/arch/arm/dts/stm32mp157a-dk1.dts
++++ b/arch/arm/dts/stm32mp157a-dk1.dts
+@@ -356,14 +356,7 @@
+ 
+ &uart4 {
+ 	pinctrl-names = "default";
+-/* brick */	
+-#if 1	
+ 	pinctrl-0 = <&uart4_pins_c>;
+-#endif	
+-/* osd32mp1-brk */
+-#if 0	
+-	pinctrl-0 = <&uart4_pins_a>;
+-#endif	
+ 	status = "okay";
+ };
+ 
+-- 
+2.26.2
+
