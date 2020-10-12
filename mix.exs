@@ -1,8 +1,8 @@
-defmodule NervesSystemOsd32mp1.MixProject do
+defmodule NervesSystemOsd32mp1Brick.MixProject do
   use Mix.Project
 
-  @github_organization "nerves-project"
-  @app :nerves_system_osd32mp1
+  @github_organization "tapickell"
+  @app :nerves_system_osd32mp1_brick
   @version Path.join(__DIR__, "VERSION")
            |> File.read!()
            |> String.trim()
